@@ -1,9 +1,9 @@
 ---
 title: "Modern Data Mining - HW 4"
 author:
-- Group Member 1
-- Group Member 2
-- Group Member 3
+- Graham Branscom
+- Mahika Calyanakoti
+- Andrew Raine
 date: 'Due: 11:59Pm,  April 7th, 2024'
 output:
   pdf_document:
@@ -69,17 +69,6 @@ Data needed:
 
 + `IQ.Full.csv`
 + `yelp_review_20k.json`
-
-# Problem 0: Study lectures
-
-Please study all three modules. Understand the main elements in each module and be able to run and compile the lectures
-
-+ textmining
-+ trees
-+ boosting
-
-
-
 
 # Problem 1: IQ and successes
 
@@ -157,7 +146,56 @@ Variable Related to Life Success in 2006
 + When needed, split data to three portions: training, testing and validation (70%/20%/10%)
   - training data: get a fit
   - testing data: find the best tuning parameters/best models
-  - validation data: only used in your final model to report the accuracy. 
+  - validation data: only used in your final model to report the accuracy.
+  
+We remove the first col (subject id) and set some columns as factors. These are the remaining features:
+```{r, echo=F, results=F}
+# load in data
+iq_df <- read.csv("./data/IQ.Full.csv")
+
+# remove first col
+iq_df <- iq_df[,-1]
+```
+```{r, echo=F, results=T}
+# set categorical variables as factors
+iq_df$Imagazine <- as.factor(iq_df$Imagazine)
+iq_df$Inewspaper <- as.factor(iq_df$Inewspaper)
+iq_df$Ilibrary <- as.factor(iq_df$Ilibrary)
+iq_df$Race <- as.factor(iq_df$Race)
+iq_df$Gender <- as.factor(iq_df$Gender)
+```
+
+```{r, echo=F, results=T}
+# log transform income and remove original income
+iq_df$log_income <- log(iq_df$Income2005)
+iq_df <- subset(iq_df, select = -Income2005)
+str(iq_df)
+```
+
+We get the last row as **Michelle** and then remove it.
+```{r, echo=F, results=T}
+michelle <- iq_df[2584,]
+iq_df <- iq_df[-2584,]
+# dim(iq_df)
+michelle
+```
+We split the data into training (70%), testing (20%), and validation (10%) sets. Then print out the dimensions of the train, test, and validation dataframes.
+```{r, echo=F, results=T}
+set.seed(123)
+
+n <- nrow(iq_df)
+train.index <- sample(n, n*0.70)
+data.train <- iq_df[train.index,]
+data.temp <- iq_df[-train.index, ]
+n_temp <- nrow(data.temp)
+test.index <- sample(n_temp, n_temp*2/3)
+data.test <- data.temp[test.index,]
+data.val <- data.temp[-test.index,]
+
+dim(data.train)
+dim(data.test)
+dim(data.val)
+```
 
 
 ## 2. Factors affect Income
@@ -165,12 +203,41 @@ Variable Related to Life Success in 2006
 We start with linear models to answer the questions below.
 
 i. To summarize ASVAB test scores, create PC1 and PC2 of 10 scores of ASVAB tests and label them as
-ASVAB_PC1 and ASVAB_PC2. Give a quick interpretation of each ASVAB_PC1 and ASVAB_PC2 in terms of the original 10 tests. 
+ASVAB_PC1 and ASVAB_PC2. Give a quick interpretation of each ASVAB_PC1 and ASVAB_PC2 in terms of the original 10 tests.
 
-ii. Is there any evidence showing ASVAB test scores in terms of ASVAB_PC1 and ASVAB_PC2, might affect the Income?  Show your work here. You may control a few other variables, including gender. 
+PC1 is a weighted sum of all of the 10 scores. All of PC1's coefficients are around 0.30, with some variation. PC2 is proportional to the sum of all scores except science, auto, mechanic, and elec, which are weighted negatively. See the coefficients below:
+```{r, echo=F, results=T}
+# ASVAB columns
+asvab_cols <- c("Science", "Arith", "Word", "Parag", "Numer", "Coding", "Auto", "Math", "Mechanic", "Elec")
 
-iii. Is there any evidence to show that there is gender bias against either male or female in terms of income in the above model? 
+# ASVAB intermediate df
+asvab_df <- iq_df[, asvab_cols]
 
+# find asvab pc1
+pca <- prcomp(asvab_df, scale=TRUE, center=T)
+pc1_2 <- pca$rotation[,c(1,2)]
+pc1_2
+```
+
+
+ii. Is there any evidence showing ASVAB test scores in terms of ASVAB_PC1 and ASVAB_PC2, might affect the Income?  Show your work here. You may control a few other variables, including gender.
+
+We added the PC1 and PC2 scores for each row in `iq_df`.
+```{r, echo=F, results=F}
+iq_df$ASVAB_PC1 <- pca$x[,1]
+iq_df$ASVAB_PC2 <- pca$x[,2]
+str(iq_df)
+```
+
+We run a linear model of log_income (response variable) vs ASVAB_PC1 and ASVAB_PC2. We control for gender, education, and race. ASVAB_PC1 and ASVAB_PC2 both have small p-values <0.001, and both have positive coefficients of about 0.06. This implies that higher PC1 and PC2 scores on average are correlated with a higher log(income).
+```{r, echo=F, result=T}
+fit1 <- lm(log_income ~ ASVAB_PC1 + ASVAB_PC2 + Gender + Educ + Race, data=iq_df)
+summary(fit1)
+```
+
+iii. Is there any evidence to show that there is gender bias against either male or female in terms of income in the above model?
+
+Yes, because Genderfemale is the base value, and Gendermale's beta-value is 0.67 higher than the base value. This suggests that males have higher log(income) on average than females. See the summary of the lm above.
 
 We next build a few models for the purpose of prediction using all the information available. From now on you may use the three data sets setting (training/testing/validation) when it is appropriate. 
 
@@ -183,19 +250,113 @@ i. fit1: tree(Income ~ Educ + Gender, data.train) with default set up
     c) Does it show interaction effect of Gender and Educ on Income?
     d) Predict Michelle's income
 
+We find the tree for Educ and Gender's effect on income. There are 4 end nodes. If female, go to the left subtree. Otherwise, go to right subtree. Then in the left sub-tree, go left if Educ < 15.5; otherwise go right. The same is true for the right-subtree. This brings you to both end nodes. The prediction values in the end nodes are the average log_income values for the datapoints in data.train that fall into that partition.
+The prediction equation: If female and educ < 15.5, then log_income 9.959. If female and educ > 15.5, then log_income 10.520. If male and educ < 15.5, then log_income 10.570. If male and educ > 15.5, then log_income 11.160.
+
+There is an interactive effect of gender and education on log_income. The decision tree analysis suggests that for females, higher education (Educ > 15.5) is associated with higher income, while for males, higher education also leads to higher income, but the effect is not as pronounced as for females.
+
+Our tree model predicts that **Michelle** has log_income 9.959322 because she is a female with educ = 13 < 15.5.
+
+```{r, echo=F, results=T}
+fit_t1 <- tree(log_income ~ Educ + Gender, data.train) 
+plot(fit_t1)
+title(main =  "fit_t1 tree: Educ + Gender")
+text(fit_t1, pretty=0)
+```
+```{r, echo=F, result=T}
+prediction <- predict(fit_t1, newdata = michelle)
+prediction
+```
+
 ii. fit2: fit2 <- rpart(Income2005 ~., data.train, minsplit=20, cp=.009)
 
     a) Display the tree using plot(as.party(fit2), main="Final Tree with Rpart") 
     b) A brief summary of the fit2
     c) Compare testing errors between fit1 and fit2. Is the training error from fit2 always less than that from fit1? Is the testing error from fit2 always smaller than that from fit1? 
     d) You may prune the fit2 to get a tree with small testing error. 
-    
+
+fit_t2 first splits by Gender, then each subtree to the left and right is split differently. The left splits by Education and then AFQT. The right splits by Arith then Educ. There are 6 leaf nodes, each of which has the average log_income for that respective partition of the data.
+```{r, echo=F, results=T}
+fit_t2 <- rpart(log_income ~., data.train, minsplit=20, cp=.009) 
+plot(as.party(fit_t2), main="Final Tree with Rpart")
+fit_t2
+```
+The training and testing errors for fit1 and fit2 are printed below. Fit2 has better training error and testing error than fit1, which makes sense since fit2 has more variables, so its tree can be more precise.
+```{r, echo=F, result=T}
+# get training error
+train.error.t1 <- sum((predict(fit_t1, data.train) - data.train$log_income)^2)
+print(paste("train error t1:", train.error.t1))
+train.error.t2 <- sum((predict(fit_t2, data.train) - data.train$log_income)^2)
+print(paste("train error t2:", train.error.t2))
+
+# get testing error
+test.error.t1 <- sum((predict(fit_t1, data.test) - data.test$log_income)^2)
+print(paste("test error t1:", test.error.t1))
+test.error.t2 <- sum((predict(fit_t2, data.test) - data.test$log_income)^2)
+print(paste("test error t2:", test.error.t2))
+```
+We predict **Michelle** using fit2 below.
+```{r, echo=F, result=T}
+prediction <- predict(fit_t2, newdata = michelle)
+prediction
+```    
+
+With a lower cp score assigned while pruning, we cannot reach a training and testing error below what was achieved with the initial fit_t2 tree.
+```{r, echo=F, result=T}
+fit2.p <- prune.rpart(fit_t2, cp=0.00001)
+# get training error
+train.error.t2.p <- sum((predict(fit2.p, data.train) - data.train$log_income)^2)
+print(paste("train error t2 pruned:", train.error.t2.p))
+
+# get testing error
+test.error.t2.p <- sum((predict(fit2.p, data.test) - data.test$log_income)^2)
+print(paste("test error t2 pruned:", test.error.t2.p))
+```
+
+
 iii. fit3: bag two trees
 
     a) Take 2 bootstrap training samples and build two trees using the 
     rpart(Income2005 ~., data.train.b, minsplit=20, cp=.009). Display both trees.
     b) Explain how to get fitted values for Michelle by bagging the two trees obtained above. Do not use the predict(). 
     c) What is the testing error for the bagged tree. Is it guaranteed that the testing error by bagging the two tree always smaller that either single tree? 
+
+We take 2 bootstrap training samples and build two trees. The trees are clearly different.
+```{r, echo=F, result=T}
+set.seed(1)
+index1 <- sample(1808, 1808, replace=TRUE)
+boot1 <- data.train[index1,]
+index2 <- sample(1808, 1808, replace=TRUE)
+boot2 <- data.train[index2,]
+
+boot.1.single.full <- rpart(log_income ~., boot1, minsplit=20, cp=.009)
+plot(boot.1.single.full)
+title(main = "Bootstrap tree 1")
+text(boot.1.single.full, pretty=0)
+
+boot.2.single.full <- rpart(log_income ~., boot2, minsplit=20, cp=.009)
+plot(boot.2.single.full)
+title(main = "Bootstrap tree 2")
+text(boot.2.single.full, pretty=0)
+```
+To find the average, we followed each tree boot1 and boot2 separately for **Michelle**'s variables and then found the value at the leaf node for each tree. We then averaged those two values. Lastly, we verified our answer by using predict to bag the two trees, and we obtained the value below:
+```{r, echo=F, result=T}
+# bag of two trees by averaging the two fitted equations. predict the response for michelle:
+fit.bag.2.predict <- (predict(boot.1.single.full, michelle) + predict(boot.2.single.full, michelle))/2 #bagging
+data.frame(fitted=fit.bag.2.predict,  obsy=michelle$log_income)
+```
+
+We find the testing error for the bagged tree. The testing errors of the boot1, boot2, and bagged trees are shown below. Our bagged error was less than that of the individual times, which was the case for several times we ran it, but not always.
+```{r, echo=F, result=T}
+test.error.boot1 <- sum((predict(boot.1.single.full, data.test) - data.test$log_income)^2)
+print(paste("test error boot1:", test.error.boot1))
+test.error.boot2 <- sum((predict(boot.2.single.full, data.test) - data.test$log_income)^2)
+print(paste("test error boot2:", test.error.boot2))
+
+test.error.bagged <- sum(((predict(boot.1.single.full, data.test) + predict(boot.2.single.full, data.test)) / 2 - data.test$log_income)^2)
+print(paste("test error bagged boot1 and boot2:", test.error.bagged))
+```
+
     
 iv. fit4: Build a best possible RandomForest
 
