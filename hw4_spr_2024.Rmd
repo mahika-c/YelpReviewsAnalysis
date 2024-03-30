@@ -20,134 +20,192 @@ output:
     toc: yes
     toc_depth: '4'
 urlcolor: blue  
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(fig.height=4, fig.width=6, warning = F)
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(randomForest, tree, ISLR, rpart, rattle, pROC, partykit, ggplot2, glmnet, leaps, dplyr, keras, neuralnet, imager, ranger, xgboost)
+pacman::p_load(randomForest, tree, ISLR, rpart, rattle, pROC, partykit, ggplot2, glmnet, leaps, dplyr, keras, neuralnet, imager, ranger, xgboost, mltools, data.table)
 ```
-
-
 
 # Overview
 
-In this homework, we will explore the transition from linear models to more flexible, tree-based methods and ensemble techniques in predictive modeling. Unlike linear models, a model-free approach, such as binary decision trees, offers a more intuitive understanding by illustrating direct relationships between predictors and responses. Although simple, binary decision trees are highly interpretable and can unveil valuable insights.
+In this homework, we will explore the transition from linear models to
+more flexible, tree-based methods and ensemble techniques in predictive
+modeling. Unlike linear models, a model-free approach, such as binary
+decision trees, offers a more intuitive understanding by illustrating
+direct relationships between predictors and responses. Although simple,
+binary decision trees are highly interpretable and can unveil valuable
+insights.
 
-However, to harness greater predictive power, we can extend beyond a single decision tree. By aggregating multiple models, particularly those that are uncorrelated, we significantly enhance our predictive accuracy. A prime example of this concept is the RandomForest algorithm. Here, we create a multitude of decision trees through bootstrap sampling – a method where each tree is built from a random subset of data and variables. The aggregation of these diverse trees results in a robust final prediction model.
+However, to harness greater predictive power, we can extend beyond a
+single decision tree. By aggregating multiple models, particularly those
+that are uncorrelated, we significantly enhance our predictive accuracy.
+A prime example of this concept is the RandomForest algorithm. Here, we
+create a multitude of decision trees through bootstrap sampling – a
+method where each tree is built from a random subset of data and
+variables. The aggregation of these diverse trees results in a robust
+final prediction model.
 
-Ensemble methods extend this idea further by combining various models to improve predictive performance. This could involve averaging or taking a weighted average of numerous distinct models. Often, this approach surpasses the predictive capability of any individual model at hand, providing a powerful tool for tackling complex data mining challenges.
+Ensemble methods extend this idea further by combining various models to
+improve predictive performance. This could involve averaging or taking a
+weighted average of numerous distinct models. Often, this approach
+surpasses the predictive capability of any individual model at hand,
+providing a powerful tool for tackling complex data mining challenges.
 
-Boosting, particularly Gradient Boosting Machines, stands out as another potent predictive method. Unlike traditional ensemble techniques that build models independently, boosting focuses on sequentially improving the prediction by specifically targeting the errors of previous models. Each new model incrementally reduces the errors, leading to a highly accurate combined prediction. 
+Boosting, particularly Gradient Boosting Machines, stands out as another
+potent predictive method. Unlike traditional ensemble techniques that
+build models independently, boosting focuses on sequentially improving
+the prediction by specifically targeting the errors of previous models.
+Each new model incrementally reduces the errors, leading to a highly
+accurate combined prediction.
 
-All the methods mentioned above  can handle diverse types of data and predict outcomes ranging from continuous to categorical responses, including multi-level categories.
+All the methods mentioned above can handle diverse types of data and
+predict outcomes ranging from continuous to categorical responses,
+including multi-level categories.
 
-In Homework 4, we will delve into these advanced techniques, moving beyond the limitations of linear models and exploring the expansive potential of trees, ensembles, and boosting in modern data mining. This journey will provide you with a solid foundation in leveraging sophisticated algorithms to uncover deeper insights and achieve superior predictive performance. 
-
+In Homework 4, we will delve into these advanced techniques, moving
+beyond the limitations of linear models and exploring the expansive
+potential of trees, ensembles, and boosting in modern data mining. This
+journey will provide you with a solid foundation in leveraging
+sophisticated algorithms to uncover deeper insights and achieve superior
+predictive performance.
 
 ## Objectives
 
+-   Understand trees
 
-- Understand trees
-    + single tree/displaying/pruning a tree
-    + RandomForest
-    + Ensemble idea
-    + Boosting 
+    -   single tree/displaying/pruning a tree
+    -   RandomForest
+    -   Ensemble idea
+    -   Boosting
 
-- R functions/Packages
-    + `tree`, `RandomForest`, `ranger`
-    + Boosting functions
-    
-- Json data format
+-   R functions/Packages
 
-- text mining
-    + bag of words
-  
+    -   `tree`, `RandomForest`, `ranger`
+    -   Boosting functions
+
+-   Json data format
+
+-   text mining
+
+    -   bag of words
 
 Data needed:
 
-+ `IQ.Full.csv`
-+ `yelp_review_20k.json`
+-   `IQ.Full.csv`
+-   `yelp_review_20k.json`
 
 # Problem 1: IQ and successes
 
-## Background: Measurement of Intelligence 
+## Background: Measurement of Intelligence
 
-Case Study:  how intelligence relates to one's future successes?
+Case Study: how intelligence relates to one's future successes?
 
 **Data needed: `IQ.Full.csv`**
 
-ASVAB (Armed Services Vocational Aptitude Battery) tests have been used as a screening test for those who want to join the army or other jobs. 
+ASVAB (Armed Services Vocational Aptitude Battery) tests have been used
+as a screening test for those who want to join the army or other jobs.
 
-Our data set IQ.csv is a subset of individuals from the 1979 National Longitudinal Study of 
-Youth (NLSY79) survey who were re-interviewed in 2006. Information about family, personal demographic such as gender, race and education level, plus a set of ASVAB (Armed Services Vocational Aptitude Battery) test scores are available. It is STILL used as a screening test for those who want to join the army! ASVAB scores were 1981 and income was 2005. 
+Our data set IQ.csv is a subset of individuals from the 1979 National
+Longitudinal Study of Youth (NLSY79) survey who were re-interviewed in
+2006. Information about family, personal demographic such as gender,
+race and education level, plus a set of ASVAB (Armed Services Vocational
+Aptitude Battery) test scores are available. It is STILL used as a
+screening test for those who want to join the army! ASVAB scores were
+1981 and income was 2005.
 
-**Our goals:** 
+**Our goals:**
 
-+ Is IQ related to one's successes measured by Income?
-+ Is there evidence to show that Females are under-paid?
-+ What are the best possible prediction models to predict future income? 
-
+-   Is IQ related to one's successes measured by Income?
+-   Is there evidence to show that Females are under-paid?
+-   What are the best possible prediction models to predict future
+    income?
 
 **The ASVAB has the following components:**
 
-+ Science, Arith (Arithmetic reasoning), Word (Word knowledge), Parag (Paragraph comprehension), Numer (Numerical operation), Coding (Coding speed), Auto (Automative and Shop information), Math (Math knowledge), Mechanic (Mechanic Comprehension) and Elec (Electronic information).
-+ AFQT (Armed Forces Qualifying Test) is a combination of Word, Parag, Math and Arith.
-+ Note: Service Branch requirement: Army 31, Navy 35, Marines 31, Air Force 36, and Coast Guard 45,(out of 100 which is the max!) 
+-   Science, Arith (Arithmetic reasoning), Word (Word knowledge), Parag
+    (Paragraph comprehension), Numer (Numerical operation), Coding
+    (Coding speed), Auto (Automative and Shop information), Math (Math
+    knowledge), Mechanic (Mechanic Comprehension) and Elec (Electronic
+    information).
+-   AFQT (Armed Forces Qualifying Test) is a combination of Word, Parag,
+    Math and Arith.
+-   Note: Service Branch requirement: Army 31, Navy 35, Marines 31, Air
+    Force 36, and Coast Guard 45,(out of 100 which is the max!)
 
 **The detailed variable definitions:**
 
-Personal Demographic Variables: 
+Personal Demographic Variables:
 
- * Race: 1 = Hispanic, 2 = Black, 3 = Not Hispanic or Black
- * Gender: a factor with levels "female" and "male"
- * Educ: years of education completed by 2006
- 
-Household Environment: 
- 
-* Imagazine: a variable taking on the value 1 if anyone in the respondent’s household regularly read
-	magazines in 1979, otherwise 0
-* Inewspaper: a variable taking on the value 1 if anyone in the respondent’s household regularly read
-	newspapers in 1979, otherwise 0
-* Ilibrary: a variable taking on the value 1 if anyone in the respondent’s household had a library card
-	in 1979, otherwise 0
-* MotherEd: mother’s years of education
-* FatherEd: father’s years of education
+-   Race: 1 = Hispanic, 2 = Black, 3 = Not Hispanic or Black
+-   Gender: a factor with levels "female" and "male"
+-   Educ: years of education completed by 2006
+
+Household Environment:
+
+-   Imagazine: a variable taking on the value 1 if anyone in the
+    respondent’s household regularly read magazines in 1979, otherwise 0
+-   Inewspaper: a variable taking on the value 1 if anyone in the
+    respondent’s household regularly read newspapers in 1979, otherwise
+    0
+-   Ilibrary: a variable taking on the value 1 if anyone in the
+    respondent’s household had a library card in 1979, otherwise 0
+-   MotherEd: mother’s years of education
+-   FatherEd: father’s years of education
 
 Variables Related to ASVAB test Scores in 1981 (Proxy of IQ's)
 
-* AFQT: percentile score on the AFQT intelligence test in 1981 
-* Coding: score on the Coding Speed test in 1981
-* Auto: score on the Automotive and Shop test in 1981
-* Mechanic: score on the Mechanic test in 1981
-* Elec: score on the Electronics Information test in 1981
+-   AFQT: percentile score on the AFQT intelligence test in 1981
 
-* Science: score on the General Science test in 1981
-* Math: score on the Math test in 1981
-* Arith: score on the Arithmetic Reasoning test in 1981
-* Word: score on the Word Knowledge Test in 1981
-* Parag: score on the Paragraph Comprehension test in 1981
-* Numer: score on the Numerical Operations test in 1981
+-   Coding: score on the Coding Speed test in 1981
+
+-   Auto: score on the Automotive and Shop test in 1981
+
+-   Mechanic: score on the Mechanic test in 1981
+
+-   Elec: score on the Electronics Information test in 1981
+
+-   Science: score on the General Science test in 1981
+
+-   Math: score on the Math test in 1981
+
+-   Arith: score on the Arithmetic Reasoning test in 1981
+
+-   Word: score on the Word Knowledge Test in 1981
+
+-   Parag: score on the Paragraph Comprehension test in 1981
+
+-   Numer: score on the Numerical Operations test in 1981
 
 Variable Related to Life Success in 2006
 
-* Income2005: total annual income from wages and salary in 2005. We will use a natural log transformation over the income.
+-   Income2005: total annual income from wages and salary in 2005. We
+    will use a natural log transformation over the income.
 
+**Note: All the Esteem scores shouldn't be used as predictors to predict
+income**
 
-**Note: All the Esteem scores shouldn't be used as predictors to predict income**
+## 1. EDA: Some cleaning work is needed to organize the data.
 
-## 1. EDA: Some cleaning work is needed to organize the data. 
+-   The first variable is the label for each person. Take that out.
+-   Set categorical variables as factors.
+-   Make log transformation for Income and take the original Income out
+-   Take the last person out of the dataset and label it as
+    **Michelle**.
+-   When needed, split data to three portions: training, testing and
+    validation (70%/20%/10%)
+    -   training data: get a fit
+    -   testing data: find the best tuning parameters/best models
+    -   validation data: only used in your final model to report the
+        accuracy.
 
-+ The first variable is the label for each person. Take that out.
-+ Set categorical variables as factors. 
-+ Make log transformation for Income and take the original Income out
-+ Take the last person out of the dataset and label it as **Michelle**. 
-+ When needed, split data to three portions: training, testing and validation (70%/20%/10%)
-  - training data: get a fit
-  - testing data: find the best tuning parameters/best models
-  - validation data: only used in your final model to report the accuracy.
-  
-We remove the first col (subject id) and set some columns as factors. These are the remaining features:
+We remove the first col (subject id) and set some columns as factors.
+These are the remaining features:
+
 ```{r, echo=F, results=F}
 # load in data
 iq_df <- read.csv("./data/IQ.Full.csv")
@@ -155,6 +213,7 @@ iq_df <- read.csv("./data/IQ.Full.csv")
 # remove first col
 iq_df <- iq_df[,-1]
 ```
+
 ```{r, echo=F, results=T}
 # set categorical variables as factors
 iq_df$Imagazine <- as.factor(iq_df$Imagazine)
@@ -172,13 +231,18 @@ str(iq_df)
 ```
 
 We get the last row as **Michelle** and then remove it.
+
 ```{r, echo=F, results=T}
 michelle <- iq_df[2584,]
 iq_df <- iq_df[-2584,]
 # dim(iq_df)
 michelle
 ```
-We split the data into training (70%), testing (20%), and validation (10%) sets. Then print out the dimensions of the train, test, and validation dataframes.
+
+We split the data into training (70%), testing (20%), and validation
+(10%) sets. Then print out the dimensions of the train, test, and
+validation dataframes.
+
 ```{r, echo=F, results=T}
 set.seed(123)
 
@@ -196,15 +260,20 @@ dim(data.test)
 dim(data.val)
 ```
 
-
 ## 2. Factors affect Income
 
 We start with linear models to answer the questions below.
 
-i. To summarize ASVAB test scores, create PC1 and PC2 of 10 scores of ASVAB tests and label them as
-ASVAB_PC1 and ASVAB_PC2. Give a quick interpretation of each ASVAB_PC1 and ASVAB_PC2 in terms of the original 10 tests.
+i.  To summarize ASVAB test scores, create PC1 and PC2 of 10 scores of
+    ASVAB tests and label them as ASVAB_PC1 and ASVAB_PC2. Give a quick
+    interpretation of each ASVAB_PC1 and ASVAB_PC2 in terms of the
+    original 10 tests.
 
-PC1 is a weighted sum of all of the 10 scores. All of PC1's coefficients are around 0.30, with some variation. PC2 is proportional to the sum of all scores except science, auto, mechanic, and elec, which are weighted negatively. See the coefficients below:
+PC1 is a weighted sum of all of the 10 scores. All of PC1's coefficients
+are around 0.30, with some variation. PC2 is proportional to the sum of
+all scores except science, auto, mechanic, and elec, which are weighted
+negatively. See the coefficients below:
+
 ```{r, echo=F, results=T}
 # ASVAB columns
 asvab_cols <- c("Science", "Arith", "Word", "Parag", "Numer", "Coding", "Auto", "Math", "Mechanic", "Elec")
@@ -218,43 +287,69 @@ pc1_2 <- pca$rotation[,c(1,2)]
 pc1_2
 ```
 
-
-ii. Is there any evidence showing ASVAB test scores in terms of ASVAB_PC1 and ASVAB_PC2, might affect the Income?  Show your work here. You may control a few other variables, including gender.
+ii. Is there any evidence showing ASVAB test scores in terms of
+    ASVAB_PC1 and ASVAB_PC2, might affect the Income? Show your work
+    here. You may control a few other variables, including gender.
 
 We added the PC1 and PC2 scores for each row in `iq_df`.
+
 ```{r, echo=F, results=F}
 iq_df$ASVAB_PC1 <- pca$x[,1]
 iq_df$ASVAB_PC2 <- pca$x[,2]
 str(iq_df)
 ```
 
-We run a linear model of log_income (response variable) vs ASVAB_PC1 and ASVAB_PC2. We control for gender, education, and race. ASVAB_PC1 and ASVAB_PC2 both have small p-values <0.001, and both have positive coefficients of about 0.06. This implies that higher PC1 and PC2 scores on average are correlated with a higher log(income).
+We run a linear model of log_income (response variable) vs ASVAB_PC1 and
+ASVAB_PC2. We control for gender, education, and race. ASVAB_PC1 and
+ASVAB_PC2 both have small p-values \<0.001, and both have positive
+coefficients of about 0.06. This implies that higher PC1 and PC2 scores
+on average are correlated with a higher log(income).
+
 ```{r, echo=F, result=T}
 fit1 <- lm(log_income ~ ASVAB_PC1 + ASVAB_PC2 + Gender + Educ + Race, data=iq_df)
 summary(fit1)
 ```
 
-iii. Is there any evidence to show that there is gender bias against either male or female in terms of income in the above model?
+iii. Is there any evidence to show that there is gender bias against
+     either male or female in terms of income in the above model?
 
-Yes, because Genderfemale is the base value, and Gendermale's beta-value is 0.67 higher than the base value. This suggests that males have higher log(income) on average than females. See the summary of the lm above.
+Yes, because Genderfemale is the base value, and Gendermale's beta-value
+is 0.67 higher than the base value. This suggests that males have higher
+log(income) on average than females. See the summary of the lm above.
 
-We next build a few models for the purpose of prediction using all the information available. From now on you may use the three data sets setting (training/testing/validation) when it is appropriate. 
+We next build a few models for the purpose of prediction using all the
+information available. From now on you may use the three data sets
+setting (training/testing/validation) when it is appropriate.
 
 ## 3. Trees
 
-i. fit1: tree(Income ~ Educ + Gender, data.train) with default set up 
+i.  fit1: tree(Income \~ Educ + Gender, data.train) with default set up
 
-    a) Display the tree
-    b) How many end nodes? Briefly explain how the estimation is obtained in each end nodes and deescribe the prediction equation
-    c) Does it show interaction effect of Gender and Educ on Income?
-    d) Predict Michelle's income
+    a)  Display the tree
+    b)  How many end nodes? Briefly explain how the estimation is
+        obtained in each end nodes and deescribe the prediction equation
+    c)  Does it show interaction effect of Gender and Educ on Income?
+    d)  Predict Michelle's income
 
-We find the tree for Educ and Gender's effect on income. There are 4 end nodes. If female, go to the left subtree. Otherwise, go to right subtree. Then in the left sub-tree, go left if Educ < 15.5; otherwise go right. The same is true for the right-subtree. This brings you to both end nodes. The prediction values in the end nodes are the average log_income values for the datapoints in data.train that fall into that partition.
-The prediction equation: If female and educ < 15.5, then log_income 9.959. If female and educ > 15.5, then log_income 10.520. If male and educ < 15.5, then log_income 10.570. If male and educ > 15.5, then log_income 11.160.
+We find the tree for Educ and Gender's effect on income. There are 4 end
+nodes. If female, go to the left subtree. Otherwise, go to right
+subtree. Then in the left sub-tree, go left if Educ \< 15.5; otherwise
+go right. The same is true for the right-subtree. This brings you to
+both end nodes. The prediction values in the end nodes are the average
+log_income values for the datapoints in data.train that fall into that
+partition. The prediction equation: If female and educ \< 15.5, then
+log_income 9.959. If female and educ \> 15.5, then log_income 10.520. If
+male and educ \< 15.5, then log_income 10.570. If male and educ \> 15.5,
+then log_income 11.160.
 
-There is an interactive effect of gender and education on log_income. The decision tree analysis suggests that for females, higher education (Educ > 15.5) is associated with higher income, while for males, higher education also leads to higher income, but the effect is not as pronounced as for females.
+There is an interactive effect of gender and education on log_income.
+The decision tree analysis suggests that for females, higher education
+(Educ \> 15.5) is associated with higher income, while for males, higher
+education also leads to higher income, but the effect is not as
+pronounced as for females.
 
-Our tree model predicts that **Michelle** has log_income 9.959322 because she is a female with educ = 13 < 15.5.
+Our tree model predicts that **Michelle** has log_income 9.959322
+because she is a female with educ = 13 \< 15.5.
 
 ```{r, echo=F, results=T}
 fit_t1 <- tree(log_income ~ Educ + Gender, data.train) 
@@ -262,25 +357,38 @@ plot(fit_t1)
 title(main =  "fit_t1 tree: Educ + Gender")
 text(fit_t1, pretty=0)
 ```
+
 ```{r, echo=F, result=T}
 prediction <- predict(fit_t1, newdata = michelle)
 prediction
 ```
 
-ii. fit2: fit2 <- rpart(Income2005 ~., data.train, minsplit=20, cp=.009)
+ii. fit2: fit2 \<- rpart(Income2005 \~., data.train, minsplit=20,
+    cp=.009)
 
-    a) Display the tree using plot(as.party(fit2), main="Final Tree with Rpart") 
-    b) A brief summary of the fit2
-    c) Compare testing errors between fit1 and fit2. Is the training error from fit2 always less than that from fit1? Is the testing error from fit2 always smaller than that from fit1? 
-    d) You may prune the fit2 to get a tree with small testing error. 
+    a)  Display the tree using plot(as.party(fit2), main="Final Tree
+        with Rpart")
+    b)  A brief summary of the fit2
+    c)  Compare testing errors between fit1 and fit2. Is the training
+        error from fit2 always less than that from fit1? Is the testing
+        error from fit2 always smaller than that from fit1?
+    d)  You may prune the fit2 to get a tree with small testing error.
 
-fit_t2 first splits by Gender, then each subtree to the left and right is split differently. The left splits by Education and then AFQT. The right splits by Arith then Educ. There are 6 leaf nodes, each of which has the average log_income for that respective partition of the data.
+fit_t2 first splits by Gender, then each subtree to the left and right
+is split differently. The left splits by Education and then AFQT. The
+right splits by Arith then Educ. There are 6 leaf nodes, each of which
+has the average log_income for that respective partition of the data.
+
 ```{r, echo=F, results=T}
 fit_t2 <- rpart(log_income ~., data.train, minsplit=20, cp=.009) 
 plot(as.party(fit_t2), main="Final Tree with Rpart")
 fit_t2
 ```
-The training and testing errors for fit1 and fit2 are printed below. Fit2 has better training error and testing error than fit1, which makes sense since fit2 has more variables, so its tree can be more precise.
+
+The training and testing errors for fit1 and fit2 are printed below.
+Fit2 has better training error and testing error than fit1, which makes
+sense since fit2 has more variables, so its tree can be more precise.
+
 ```{r, echo=F, result=T}
 # get training error
 train.error.t1 <- sum((predict(fit_t1, data.train) - data.train$log_income)^2)
@@ -294,13 +402,17 @@ print(paste("test error t1:", test.error.t1))
 test.error.t2 <- sum((predict(fit_t2, data.test) - data.test$log_income)^2)
 print(paste("test error t2:", test.error.t2))
 ```
+
 We predict **Michelle** using fit2 below.
+
 ```{r, echo=F, result=T}
 prediction <- predict(fit_t2, newdata = michelle)
 prediction
-```    
+```
 
-With a lower cp score assigned while pruning, we cannot reach a training and testing error below what was achieved with the initial fit_t2 tree.
+With a lower cp score assigned while pruning, we cannot reach a training
+and testing error below what was achieved with the initial fit_t2 tree.
+
 ```{r, echo=F, result=T}
 fit2.p <- prune.rpart(fit_t2, cp=0.00001)
 # get training error
@@ -312,15 +424,18 @@ test.error.t2.p <- sum((predict(fit2.p, data.test) - data.test$log_income)^2)
 print(paste("test error t2 pruned:", test.error.t2.p))
 ```
 
-
 iii. fit3: bag two trees
 
-    a) Take 2 bootstrap training samples and build two trees using the 
-    rpart(Income2005 ~., data.train.b, minsplit=20, cp=.009). Display both trees.
-    b) Explain how to get fitted values for Michelle by bagging the two trees obtained above. Do not use the predict(). 
-    c) What is the testing error for the bagged tree. Is it guaranteed that the testing error by bagging the two tree always smaller that either single tree? 
+```         
+a) Take 2 bootstrap training samples and build two trees using the 
+rpart(Income2005 ~., data.train.b, minsplit=20, cp=.009). Display both trees.
+b) Explain how to get fitted values for Michelle by bagging the two trees obtained above. Do not use the predict(). 
+c) What is the testing error for the bagged tree. Is it guaranteed that the testing error by bagging the two tree always smaller that either single tree? 
+```
 
-We take 2 bootstrap training samples and build two trees. The trees are clearly different.
+We take 2 bootstrap training samples and build two trees. The trees are
+clearly different.
+
 ```{r, echo=F, result=T}
 set.seed(1)
 index1 <- sample(1808, 1808, replace=TRUE)
@@ -338,14 +453,24 @@ plot(boot.2.single.full)
 title(main = "Bootstrap tree 2")
 text(boot.2.single.full, pretty=0)
 ```
-To find the average, we followed each tree boot1 and boot2 separately for **Michelle**'s variables and then found the value at the leaf node for each tree. We then averaged those two values. Lastly, we verified our answer by using predict to bag the two trees, and we obtained the value below:
+
+To find the average, we followed each tree boot1 and boot2 separately
+for **Michelle**'s variables and then found the value at the leaf node
+for each tree. We then averaged those two values. Lastly, we verified
+our answer by using predict to bag the two trees, and we obtained the
+value below:
+
 ```{r, echo=F, result=T}
 # bag of two trees by averaging the two fitted equations. predict the response for michelle:
 fit.bag.2.predict <- (predict(boot.1.single.full, michelle) + predict(boot.2.single.full, michelle))/2 #bagging
 data.frame(fitted=fit.bag.2.predict,  obsy=michelle$log_income)
 ```
 
-We find the testing error for the bagged tree. The testing errors of the boot1, boot2, and bagged trees are shown below. Our bagged error was less than that of the individual times, which was the case for several times we ran it, but not always.
+We find the testing error for the bagged tree. The testing errors of the
+boot1, boot2, and bagged trees are shown below. Our bagged error was
+less than that of the individual times, which was the case for several
+times we ran it, but not always.
+
 ```{r, echo=F, result=T}
 test.error.boot1 <- sum((predict(boot.1.single.full, data.test) - data.test$log_income)^2)
 print(paste("test error boot1:", test.error.boot1))
@@ -356,30 +481,260 @@ test.error.bagged <- sum(((predict(boot.1.single.full, data.test) + predict(boot
 print(paste("test error bagged boot1 and boot2:", test.error.bagged))
 ```
 
-    
 iv. fit4: Build a best possible RandomForest
 
-    a) Show the process how you tune mtry and number of trees. Give a very high level explanation how fit4 is built.
-    b) Compare the oob errors form fit4 to the testing errors using your testing data. Are you convinced that oob errors estimate testing error reasonably well.
-    c) What is the predicted value for Michelle?
+    a)  Show the process how you tune mtry and number of trees. Give a
+        very high level explanation how fit4 is built.
 
-v. Now you have built so many predicted models (fit1 through fit4 in this section). What about build a fit5 which bags fit1 through fit4. Does fit5 have the smallest testing error?
+Based on the plot below we see that the error plateaus after 100 trees.
 
-iv. Now use `XGBoost` to build the fit6 predictive equation. Evaluate its testing error. Also briefly explain how it works. 
+```{r}
+fit.rf <- randomForest(log_income~., data.train, mtry=5, ntree=200) # change ntree
+plot(fit.rf, col="red", pch=16, type="p", main="Error by # of trees")
+```
 
-vii.  Summarize the results and nail down one best possible final model you will recommend to predict income. Explain briefly why this is the best choice. Finally for the first time evaluate the prediction error using the validating data set. 
+Based on the plot of the testing errors of mtry with 100 trees, optimal
+mtry is 8.
 
-viii. Use your final model to predict Michelle's income. 
+```{r, echo=F, result=T}
+n_trees = 100
+rf.error.p <- 1:31  # set up a vector of length 19
+for (p in 1:31)  # repeat the following code inside { } 19 times
+{
+  fit.rf <- randomForest(log_income~., data.train, mtry=p, ntree=n_trees)
+  #plot(fit.rf, col= p, lwd = 3)
+  rf.error.p[p] <- fit.rf$mse[n_trees]  # collecting oob mse based on n_trees trees
+}
+rf.error.p   # oob mse returned: should be a vector of 19
+
+plot(1:31, rf.error.p, pch=16,
+     main = "Testing errors of mtry with 100 trees",
+     xlab="mtry",
+     ylab="OOB mse of mtry")
+lines(1:31, rf.error.p)
+```
+
+Now we run our fine-tuned random forest with the optimal parameters
+found above.
+
+fit4 is created by taking 100 random trees and choosing only 8
+parameters when splitting at each node. Then, using bagging, the output
+values of each tree are averaged.
+
+```{r, echo=F, result=T}
+fit4 <- randomForest(log_income~., data.train, mtry=8, ntree=100)
+fit4
+```
+
+b)  Compare the oob errors from fit4 to the testing errors using your
+    testing data. Are you convinced that oob errors estimate testing
+    error reasonably well.
+
+```{r, echo=F, results=T}
+# computing OOB error
+oob_predictions <- fit4$predicted
+actual_values <- fit4$y
+
+oob_error <- mean(abs(oob_predictions - actual_values))
+
+print(paste("Out-of-Bag (OOB) Error:", oob_error))
 
 
+predictions <- predict(fit4, newdata = data.test)
+
+# computing testing error
+actual_values <- data.test$log_income 
+mae <- mean(abs(predictions - actual_values))
+
+print(paste("Mean Absolute Error (MAE):", mae))
+
+rss <- sum((predictions - actual_values)^2)
+print(paste("Residual Sum of Squares (RSS):", rss))
+```
+
+The OOB error (0.604) is quite similar to the testing error (0.62), so we can conclude that it does in fact estimate testing error well.
+
+
+c)  What is the predicted value for Michelle?
+
+```{r, echo=F, results=T}
+m_prediction <- predict(fit4, newdata = michelle)
+m_prediction
+```
+The predicted value for Michelle is 9.55.
+
+<!-- -->
+
+v.  Now you have built so many predicted models (fit1 through fit4 in
+    this section). What about build a fit5 which bags fit1 through fit4.
+    Does fit5 have the smallest testing error?
+
+
+```{r, echo=F, results=T}
+fit5 <- (predict(fit_t1, michelle) + 
+                      predict(fit_t2, michelle) + 
+                      fit.bag.2.predict +
+                      predict(fit4, michelle))/4
+data.frame(fitted=fit5,  obsy=michelle$log_income)
+```
+fit5 does not have the smallest testing error, but it is still pretty good.
+
+<!-- -->
+
+iv. Now use `XGBoost` to build the fit6 predictive equation. Evaluate
+    its testing error. Also briefly explain how it works.
     
+```{r, echo=F, results=F}
+data.train_encoded <- one_hot(as.data.table(data.train))
+
+fit6 <- xgboost(data = as.matrix(data.train_encoded[, -31]), 
+                label = data.train_encoded$log_income,
+                nrounds = 100,
+                objective = "reg:squarederror"
+                )
+
+# predict on the testing data
+data.test_encoded <- one_hot(as.data.table(data.test))
+predictions <- predict(fit6, newdata = as.matrix(data.test_encoded[, -31]))
+
+# calc the testing error (e.g., Mean Absolute Error)
+actual_values <- data.test_encoded$log_income
+testing_error <- mean(abs(predictions - actual_values))
+```
+```{r, echo=F, results=T}
+rss <- sum((predictions - actual_values)^2)
+print(paste("Residual Sum of Squares (RSS) for fit6:", rss))
+```
+XGBoost uses boosting, which builds an ensemble of decision trees sequentially. Each model after that corrects the errors made by the previous models, leading to a stronger overall model.
+
+
+v.  Summarize the results and nail down one best possible final model
+    you will recommend to predict income. Explain briefly why this is
+    the best choice. Finally for the first time evaluate the prediction
+    error using the validating data set.
+
+
+```{r, echo=F, results=F}
+# function for fit5 (takes in data to predict on)
+fit5 <- function(testing_data) {
+  p1 <- predict(fit_t1, testing_data)
+  p2 <- predict(fit_t2, testing_data)
+  p3 <- predict(boot.1.single.full, testing_data) + 
+        predict(boot.2.single.full, testing_data)
+  p4 <- predict(fit4, testing_data)
+  return ((p1 + p2 + p3 + p4) / 5)
+}
+
+# calc the RSS of fit5 on the test set
+fit5.preds <- fit5(data.test)
+actual_values <- data.test$log_income
+rss <- sum((fit5.preds - actual_values)^2)
+print(paste("Residual Sum of Squares (RSS) for fit5:", rss))
+```
+
+Note that the testing errors are RSS for all of the models.
+
+fit1 is a single decision tree based on the Educ + Gender variables.
+Testing error for fit1: 438.98
+
+fit2 is a single decision tree based on all of the variables.
+Testing error for fit2: 423.70
+
+fit3 is a bagging of two bootstrapped trees.
+Testing error for fit3: 456.14
+
+fit4 is a random forest of 100 trees with mtry=8. 
+Testing error for fit4: 416.22
+
+fit5 is a bagging of fit 1 through 4.
+Testing error for fit5: 425.17
+
+fit6 is a XGBoost model.
+Testing error for fit6: 0.65
+
+
+fit6 beats all the other models in terms of testing loss, so that is the best choice.
+
+
+```{r, echo=F, results=T}
+
+val_rss <- function(preds) {
+  actual_values <- data.val$log_income
+  rss <- sum((preds - actual_values)^2)
+  return (rss)
+}
+
+
+# calculate RSS for fit1 
+f1_preds <- predict(fit_t1, data.val)
+f1_rss <- val_rss(f1_preds)
+
+# calculate RSS for fit2 
+f2_preds <- predict(fit_t2, data.val)
+f2_rss <- val_rss(f2_preds)
+
+# calculate RSS for fit3 
+f31_preds <- predict(boot.1.single.full, data.val)
+f32_preds <- predict(boot.2.single.full, data.val)
+fit3_preds <- (f31_preds + f32_preds) / 2
+f3_rss <- val_rss(fit3_preds)
+
+# calculate RSS for fit4 
+f4_preds <- predict(fit4, data.val)
+f4_rss <- val_rss(f4_preds)
+
+# calculate RSS for fit5 
+f5_preds <- fit5(data.val)
+f5_rss <- val_rss(f5_preds)
+
+# calculate RSS for fit6 
+data.val_encoded <- one_hot(as.data.table(data.val))
+predictions <- predict(fit6, newdata = as.matrix(data.val_encoded[, -31]))
+actual_values <- data.val_encoded$log_income
+f6_rss <- sum((predictions - actual_values)^2)
+
+
+print(paste("RSS for fit1:", f1_rss))
+print(paste("RSS for fit2:", f2_rss))
+print(paste("RSS for fit3:", f3_rss))
+print(paste("RSS for fit4:", f4_rss))
+print(paste("RSS for fit5:", f5_rss))
+print(paste("RSS for fit6:", f6_rss))
+```
+Based on the validation set, fit6 remains the best performing model.
+
+
+vi. Use your final model to predict Michelle's income.
+
+```{r, echo=F, results=T}
+michelle.onehot <- one_hot(as.data.table(michelle))
+m_pred <- predict(fit6, newdata = as.matrix(michelle.onehot[, -31]))
+m_pred
+```
+The final mode, fit6, predicts Michelle's log income as 10.71299 which is extremely close to her actual income (10.71442).
+
+
+
 # Problem 2: Yelp challenge 2019
 
-**Note:** This problem is rather involved. It covers essentially all the main materials we have done so far in this semester. It could be thought as a guideline for your final project if you want when appropriate. 
+**Note:** This problem is rather involved. It covers essentially all the
+main materials we have done so far in this semester. It could be thought
+as a guideline for your final project if you want when appropriate.
 
-Yelp has made their data available to public and launched Yelp challenge. [More information](https://www.yelp.com/dataset/). It is unlikely we will win the $5,000 prize posted but we get to use their data for free. We have done a detailed analysis in our lecture. This exercise is designed for you to get hands on the whole process. 
+Yelp has made their data available to public and launched Yelp
+challenge. [More information](https://www.yelp.com/dataset/). It is
+unlikely we will win the \$5,000 prize posted but we get to use their
+data for free. We have done a detailed analysis in our lecture. This
+exercise is designed for you to get hands on the whole process.
 
-For this case study, we downloaded the [data](https://www.yelp.com/dataset/download) and took a 20k subset from **review.json**. *json* is another format for data. It is flexible and commonly-used for websites. Each item/subject/sample is contained in a brace *{}*. Data is stored as **key-value** pairs inside the brace. *Key* is the counterpart of column name in *csv* and *value* is the content/data. Both *key* and *value* are quoted. Each pair is separated by a comma. The following is an example of one item/subject/sample.
+For this case study, we downloaded the
+[data](https://www.yelp.com/dataset/download) and took a 20k subset from
+**review.json**. *json* is another format for data. It is flexible and
+commonly-used for websites. Each item/subject/sample is contained in a
+brace *{}*. Data is stored as **key-value** pairs inside the brace.
+*Key* is the counterpart of column name in *csv* and *value* is the
+content/data. Both *key* and *value* are quoted. Each pair is separated
+by a comma. The following is an example of one item/subject/sample.
 
 ```{json}
 {
@@ -388,10 +743,11 @@ For this case study, we downloaded the [data](https://www.yelp.com/dataset/downl
 }
 ```
 
-
 **Data needed:** yelp_review_20k.json available in Canvas.
 
-**yelp_review_20k.json** contains full review text data including the user_id that wrote the review and the business_id the review is written for. Here's an example of one review.
+**yelp_review_20k.json** contains full review text data including the
+user_id that wrote the review and the business_id the review is written
+for. Here's an example of one review.
 
 ```{json}
 {
@@ -426,17 +782,20 @@ For this case study, we downloaded the [data](https://www.yelp.com/dataset/downl
 
 ## Goal of the study
 
-The goals are 
+The goals are
 
-1) Try to identify important words associated with positive ratings and negative ratings. Collectively we have a sentiment analysis.  
+1)  Try to identify important words associated with positive ratings and
+    negative ratings. Collectively we have a sentiment analysis.
 
-2) To predict ratings using different methods. 
+2)  To predict ratings using different methods.
 
 ## 1. JSON data and preprocessing data
 
-i. Load *json* data
+i.  Load *json* data
 
-The *json* data provided is formatted as newline delimited JSON (ndjson). It is relatively new and useful for streaming.
+The *json* data provided is formatted as newline delimited JSON
+(ndjson). It is relatively new and useful for streaming.
+
 ```{json}
 {
   "key1": "value1",
@@ -449,6 +808,7 @@ The *json* data provided is formatted as newline delimited JSON (ndjson). It is 
 ```
 
 The traditional JSON format is as follows.
+
 ```{json}
 [{
   "key1": "value1",
@@ -460,8 +820,9 @@ The traditional JSON format is as follows.
 }]
 ```
 
-
-We use `stream_in()` in the `jsonlite` package to load the JSON data (of ndjson format) as `data.frame`. (For the traditional JSON file, use `fromJSON()` function.)
+We use `stream_in()` in the `jsonlite` package to load the JSON data (of
+ndjson format) as `data.frame`. (For the traditional JSON file, use
+`fromJSON()` function.)
 
 ```{r}
 pacman::p_load(jsonlite)
@@ -474,70 +835,86 @@ str(yelp_data)
 
 **Write a brief summary about the data:**
 
-a) Which time period were the reviews collected in this data?
+a)  Which time period were the reviews collected in this data?
 
-b) Are ratings (with 5 levels) related to month of the year or days of the week? Only address this through EDA please. 
+b)  Are ratings (with 5 levels) related to month of the year or days of
+    the week? Only address this through EDA please.
 
+<!-- -->
 
 ii. Document term matrix (dtm)
- 
- Extract document term matrix for texts to keep words appearing at least .5% of the time among all 20000 documents. Go through the similar process of cleansing as we did in the lecture. 
 
-a) Briefly explain what does this matrix record? What is the cell number at row 100 and column 405? What does it represent?
+Extract document term matrix for texts to keep words appearing at least
+.5% of the time among all 20000 documents. Go through the similar
+process of cleansing as we did in the lecture.
 
-b) What is the sparsity of the dtm obtained here? What does that mean?
+a)  Briefly explain what does this matrix record? What is the cell
+    number at row 100 and column 405? What does it represent?
 
-iii. Set the stars as a two category response variable called rating to be “1” = 5,4 and “0”= 1,2,3. Combine the variable rating with the dtm as a data frame called data2. 
+b)  What is the sparsity of the dtm obtained here? What does that mean?
+
+<!-- -->
+
+iii. Set the stars as a two category response variable called rating to
+     be “1” = 5,4 and “0”= 1,2,3. Combine the variable rating with the
+     dtm as a data frame called data2.
 
 ## Analysis
 
-Get a training data with 13000 reviews and the 5000 reserved as the testing data. Keep the rest (2000) as our validation data set. 
+Get a training data with 13000 reviews and the 5000 reserved as the
+testing data. Keep the rest (2000) as our validation data set.
 
 ## 2. LASSO
 
-i. Use the training data to get Lasso fit. Choose lambda.1se. Keep the result here.
+i.  Use the training data to get Lasso fit. Choose lambda.1se. Keep the
+    result here.
 
-ii. Feed the output from Lasso above, get a logistic regression. 
-	
-a) Pull out all the positive coefficients and the corresponding words. Rank the coefficients in a decreasing order. Report the leading 2 words and the coefficients. Describe briefly the interpretation for those two coefficients. 
+ii. Feed the output from Lasso above, get a logistic regression.
 
-b) Make a word cloud with the top 100 positive words according to their coefficients. Interpret the cloud briefly.
+<!-- -->
 
-c) Repeat i) and ii) for the bag of negative words.
+a)  Pull out all the positive coefficients and the corresponding words.
+    Rank the coefficients in a decreasing order. Report the leading 2
+    words and the coefficients. Describe briefly the interpretation for
+    those two coefficients.
 
-d) Summarize the findings. 
+b)  Make a word cloud with the top 100 positive words according to their
+    coefficients. Interpret the cloud briefly.
 
-iii. Using majority votes find the testing errors
-	i) From Lasso fit in 3)
-	ii) From logistic regression in 4)
-	iii) Which one is smaller?
+c)  Repeat i) and ii) for the bag of negative words.
 
-## 3. Random Forest  
+d)  Summarize the findings.
 
-i. Briefly summarize the method of Random Forest
+<!-- -->
 
-ii. Now train the data using the training data set by RF. Get the testing error of majority vote. Also explain how you tune the tuning parameters (`mtry` and `ntree`). 
+iii. Using majority votes find the testing errors i) From Lasso fit in
+     3)  
 
-## 4. Boosting 
+         ii) From logistic regression in 4) iii) Which one is smaller?
 
-Now use `XGBoost` to build the fourth predictive equation. Evaluate its testing error. 
+## 3. Random Forest
+
+i.  Briefly summarize the method of Random Forest
+
+ii. Now train the data using the training data set by RF. Get the
+    testing error of majority vote. Also explain how you tune the tuning
+    parameters (`mtry` and `ntree`).
+
+## 4. Boosting
+
+Now use `XGBoost` to build the fourth predictive equation. Evaluate its
+testing error.
 
 ## 5. Ensemble model
 
-i. Take average of some of the  models built above (also try all of them) and this gives us the fifth model. Report it's testing error. (Do you have more models to be bagged, try it.)
-
+i.  Take average of some of the models built above (also try all of
+    them) and this gives us the fifth model. Report it's testing error.
+    (Do you have more models to be bagged, try it.)
 
 ## 6. Final model
 
-Which classifier(s) seem to produce the least testing error? Are you surprised? Report the final model and accompany the validation error. Once again this is THE only time you use the validation data set.  For the purpose of prediction, comment on how would you predict a rating if you are given a review (not a tm output) using our final model? 
-
-
-
-
-
-
-
-
-
-
-
+Which classifier(s) seem to produce the least testing error? Are you
+surprised? Report the final model and accompany the validation error.
+Once again this is THE only time you use the validation data set. For
+the purpose of prediction, comment on how would you predict a rating if
+you are given a review (not a tm output) using our final model?
