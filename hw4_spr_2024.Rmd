@@ -494,7 +494,7 @@ plot(fit.rf, col="red", pch=16, type="p", main="Error by # of trees")
 ```
 
 Based on the plot of the testing errors of mtry with 100 trees, optimal
-mtry is 8.
+mtry is 4.
 
 ```{r, echo=F, result=T}
 n_trees = 100
@@ -517,12 +517,12 @@ lines(1:31, rf.error.p)
 Now we run our fine-tuned random forest with the optimal parameters
 found above.
 
-fit4 is created by taking 100 random trees and choosing only 8
+fit4 is created by taking 100 random trees and choosing only 4
 parameters when splitting at each node. Then, using bagging, the output
 values of each tree are averaged.
 
 ```{r, echo=F, result=T}
-fit4 <- randomForest(log_income~., data.train, mtry=8, ntree=100)
+fit4 <- randomForest(log_income~., data.train, mtry=4, ntree=100)
 fit4
 ```
 
@@ -552,7 +552,7 @@ rss <- sum((predictions - actual_values)^2)
 print(paste("Residual Sum of Squares (RSS):", rss))
 ```
 
-The OOB error (0.604) is quite similar to the testing error (0.62), so we can conclude that it does in fact estimate testing error well.
+The OOB error is quite similar to the testing MAE error (see values above), so we can conclude that it does in fact estimate testing error well.
 
 
 c)  What is the predicted value for Michelle?
@@ -561,7 +561,7 @@ c)  What is the predicted value for Michelle?
 m_prediction <- predict(fit4, newdata = michelle)
 m_prediction
 ```
-The predicted value for Michelle is 9.55.
+The predicted value for Michelle is printed above, 9.823.
 
 v.  Now you have built so many predicted models (fit1 through fit4 in
     this section). What about build a fit5 which bags fit1 through fit4.
@@ -575,7 +575,7 @@ fit5 <- (predict(fit_t1, michelle) +
                       predict(fit4, michelle))/4
 data.frame(fitted=fit5,  obsy=michelle$log_income)
 ```
-fit5 does not have the smallest testing error, but it is still pretty good.
+Above we see fit5's prediction for Michelle versus the actual value. fit5 does not have the smallest testing error, but it is still pretty good.
 
 iv. Now use `XGBoost` to build the fit6 predictive equation. Evaluate
     its testing error. Also briefly explain how it works.
@@ -639,11 +639,11 @@ Testing error for fit2: 423.70
 fit3 is a bagging of two bootstrapped trees.
 Testing error for fit3: 456.14
 
-fit4 is a random forest of 100 trees with mtry=8. 
-Testing error for fit4: 416.22
+fit4 is a random forest of 100 trees with mtry=4. 
+Testing error for fit4: 404.71
 
 fit5 is a bagging of fit 1 through 4.
-Testing error for fit5: 425.17
+Testing error for fit5: 422.59
 
 fit6 is a XGBoost model.
 Testing error for fit6: 0.65
@@ -713,10 +713,6 @@ The final mode, fit6, predicts Michelle's log income as 10.71299 which is extrem
 
 # Problem 2: Yelp challenge 2019
 
-**Note:** This problem is rather involved. It covers essentially all the
-main materials we have done so far in this semester. It could be thought
-as a guideline for your final project if you want when appropriate.
-
 Yelp has made their data available to public and launched Yelp
 challenge. [More information](https://www.yelp.com/dataset/). It is
 unlikely we will win the \$5,000 prize posted but we get to use their
@@ -730,51 +726,13 @@ commonly-used for websites. Each item/subject/sample is contained in a
 brace *{}*. Data is stored as **key-value** pairs inside the brace.
 *Key* is the counterpart of column name in *csv* and *value* is the
 content/data. Both *key* and *value* are quoted. Each pair is separated
-by a comma. The following is an example of one item/subject/sample.
-
-```{json, message=False}
-{
-  "key1": "value1",
-  "key2": "value2"
-}
-```
+by a comma. 
 
 **Data needed:** yelp_review_20k.json available in Canvas.
 
 **yelp_review_20k.json** contains full review text data including the
 user_id that wrote the review and the business_id the review is written
-for. Here's an example of one review.
-
-```{json}
-{
-    // string, 22 character unique review id
-    "review_id": "zdSx_SD6obEhz9VrW9uAWA",
-
-    // string, 22 character unique user id, maps to the user in user.json
-    "user_id": "Ha3iJu77CxlrFm-vQRs_8g",
-
-    // string, 22 character business id, maps to business in business.json
-    "business_id": "tnhfDv5Il8EaGSXZGiuQGg",
-
-    // integer, star rating
-    "stars": 4,
-
-    // string, date formatted YYYY-MM-DD
-    "date": "2016-03-09",
-
-    // string, the review itself
-    "text": "Great place to hang out after work: the prices are decent, and the ambience is fun. It's a bit loud, but very lively. The staff is friendly, and the food is good. They have a good selection of drinks.",
-
-    // integer, number of useful votes received
-    "useful": 0,
-
-    // integer, number of funny votes received
-    "funny": 0,
-
-    // integer, number of cool votes received
-    "cool": 0
-}
-```
+for.
 
 ## Goal of the study
 
@@ -792,35 +750,11 @@ i.  Load *json* data
 The *json* data provided is formatted as newline delimited JSON
 (ndjson). It is relatively new and useful for streaming.
 
-```{json}
-{
-  "key1": "value1",
-  "key2": "value2"
-}
-{
-  "key1": "value1",
-  "key2": "value2"
-}
-```
-
-The traditional JSON format is as follows.
-
-```{json}
-[{
-  "key1": "value1",
-  "key2": "value2"
-},
-{
-  "key1": "value1",
-  "key2": "value2"
-}]
-```
-
 We use `stream_in()` in the `jsonlite` package to load the JSON data (of
 ndjson format) as `data.frame`. (For the traditional JSON file, use
 `fromJSON()` function.)
 
-```{r, echo=False, results=True}
+```{r, echo=F, results=T}
 pacman::p_load(jsonlite)
 yelp_data <- jsonlite::stream_in(file("data/yelp_review_20k.json"), verbose = F)
 str(yelp_data)  
@@ -831,7 +765,7 @@ str(yelp_data)
 
 **Write a brief summary about the data:**
 
-```{r, echo=False, results=True}
+```{r, echo=F, results=T}
 # convert to date data type
 yelp_data$date <- as.POSIXct(yelp_data$date, format="%Y-%m-%d %H:%M:%S")
 # str(yelp_data)
@@ -847,7 +781,7 @@ b)  Are ratings (with 5 levels) related to month of the year or days of
     
   Based on the below plots of the distribution of ratings by day and month, it seems that the ratings have the same distribution regardless of the day of the week or the month, so they are NOT related. Because the boxplot is calculated using medians (and quartiles), they output whole numbers. And since all of the months/days have the same distribution curve (if you looked at a histogram), they all have the same medians/quartiles, and thus they all have the same boxplots (though the means would show slight variations).
     
-```{r, echo=False, results=True}
+```{r, echo=F, results=T}
 # extract month and day of the week
 yelp_data <- yelp_data %>%
   mutate(month = format(date, "%m"),
@@ -865,7 +799,7 @@ ggplot(yelp_data, aes(x = factor(day_of_week), y = stars)) +
   labs(x = "Day of the Week", y = "Stars") +
   ggtitle("Distribution of Ratings by Day of the Week")
 ```
-```{r, echo=False, results=True}
+```{r, echo=F, results=T}
 ggplot(yelp_data, aes(x = stars)) +
   geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
   labs(x = "Stars", y = "Frequency") +
@@ -883,7 +817,7 @@ process of cleansing as we did in the lecture.
 
 First, we extract the text column:
 
-```{r, echo=False, results=True}
+```{r, echo=F, results=T}
 data1.text <- yelp_data$text   # take the text out summary(data)
 length(data1.text)
 typeof(data1.text)
@@ -892,7 +826,10 @@ typeof(data1.text)
 
 
 Then, we make the corpus, clean the text (punctuation, lowercase, stemming, etc.), and set a spare threshold for words appearing 0.5% of the time, and we inspect the document term matrix:
-```{r, echo=False, results= TRUE}
+```{r, echo=F, results=T}
+install.packages("tm")
+library(tm)
+
 mycorpus1 <- VCorpus(VectorSource(data1.text))
 # Control list for creating our DTM within DocumentTermMatrix
 # Can tweak settings based off if you want punctuation, numbers, etc.
@@ -913,7 +850,7 @@ a)  Briefly explain what does this matrix record? What is the cell
     
   A document term matrix records at position i, j, where rows are the documents and columns are the terms/words, the frequency of the word j in document i. In this case, at row 100 column 405, we see a value of 0, which means that in the 100th document/yelp review the 405th word appeared that many times. We printed the 405th word, which appears to be "except". After checking the actual review, we verified that "except" wasn't found in the text.
   
-```{r, echo=False, results= TRUE}
+```{r, echo=F, results= T}
 dtm.10_df <- as.data.frame(as.matrix(dtm.10))
 dim(dtm.10_df)
 value <- dtm.10_df[100, 405]
@@ -928,7 +865,7 @@ yelp_data$text[100]
 
 b)  What is the sparsity of the dtm obtained here? What does that mean?
 
-```{r, echo=False, results=True}
+```{r, echo=F, results=T}
 dtm.10
 ```
 As seen from the output above, the sparsity is 97%, which is the proportion of cells in the matrix that are empty/0. This is a pretty sparse matrix.
@@ -942,7 +879,7 @@ iii. Set the stars as a two category response variable called rating to
      
 We create the rating column as a factor as seen below:
      
-```{r, echo=False, results=True}
+```{r, echo=F, results=T}
 yelp_data$rating <- c(0)
 yelp_data$rating[yelp_data$stars >= 4] <- 1
 yelp_data$rating <- as.factor(yelp_data$rating)
@@ -950,7 +887,7 @@ str(yelp_data) #str(data)
 ```
 
 We use cbind to combine the dtm.10 data frame with the newly created ratings column, and call it data2.
-```{r, echo=False, results=False}
+```{r, echo=F, results=T}
 # convert dtm.10 to a data frame
 dtm.10_df <- as.data.frame(as.matrix(dtm.10))
 # combine rating with dtm.10_df
@@ -1039,7 +976,7 @@ ranked_coefficients <- coefficients_df[order(-coefficients_df$coefficient), ]
 leading_words <- head(ranked_coefficients$word, 2)
 leading_coefficients <- head(ranked_coefficients$coefficient, 2)
 
-ranked_coefficients
+# ranked_coefficients
 ```
 
 The leading two words with the highest positive coefficients are gem and bomb, with 2.36898934 and 2.36822048 respectively.The positive coefficients for the words "gem" and "bomb" suggest that reviews mentioning these terms are associated with significantly higher chances of receiving a positive rating. Specifically, each occurrence of the word "gem" and "bomb" in a review is associated with approximately 2.37 times higher chances of receiving a positive rating.
@@ -1049,7 +986,7 @@ b)  Make a word cloud with the top 100 positive words according to their
     
   The word cloud prints the top positive coefficient words, with bigger words for bigger positive coefficients. This is a way to visualize the relative coefficients among the positive coefficient words.
     
-```{r, echo=FALSE, results=TRUE, warning=FALSE, message=FALSE}
+```{r, echo=F, results=T, warning=F, message=F}
 cor.special <- brewer.pal(8,"Dark2")  # set up a pretty color scheme
 wordcloud(ranked_coefficients$word[1:100], ranked_coefficients$coefficient[1:100],  # make a word cloud
           colors=cor.special, ordered.colors=F)
@@ -1073,14 +1010,14 @@ ranked_coefficients <- coefficients_df[order(coefficients_df$coefficient), ]
 leading_words <- head(ranked_coefficients$word, 2)
 leading_coefficients <- head(ranked_coefficients$coefficient, 2)
 
-ranked_coefficients
+# ranked_coefficients
 ```
 
 The leading two words with the most negative coefficients are unprofession and horribl, with -4.51791831 and -3.06445611 respectively. The negative coefficients for the words "unprofession" and "horribl" suggest that reviews mentioning these terms are associated with significantly lower chances of receiving a positive rating. Specifically, each occurrence of the word "unprofession" and "horribl" in a review is associated with approximately 4.52 or 3.06 times lower chances of receiving a positive rating respectively.
 
   The word cloud prints the more negative coefficient words, with bigger words for more negative coefficients. This is a way to visualize the relative coefficients among the negative coefficient words.
     
-```{r, echo=FALSE, results=TRUE, warning=FALSE, message=FALSE}
+```{r, echo=F, results=T, warning=F, message=F}
 library(scales)
 
 # Specify font sizes based on coefficient values
