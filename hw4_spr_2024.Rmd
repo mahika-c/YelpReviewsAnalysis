@@ -456,9 +456,9 @@ text(boot.2.single.full, pretty=0)
 
 To find the average, we followed each tree boot1 and boot2 separately
 for **Michelle**'s variables and then found the value at the leaf node
-for each tree. We then averaged those two values: (10.1449 + 10.13356)/2 = 10.13923. Lastly, we verified
-our answer by using predict to bag the two trees, and we obtained the
-value below:
+for each tree. We then averaged those two values: (10.1449 + 10.13356)/2
+= 10.13923. Lastly, we verified our answer by using predict to bag the
+two trees, and we obtained the value below:
 
 ```{r, echo=F, result=T}
 # bag of two trees by averaging the two fitted equations. predict the response for michelle:
@@ -552,8 +552,9 @@ rss <- sum((predictions - actual_values)^2)
 print(paste("Residual Sum of Squares (RSS):", rss))
 ```
 
-The OOB error is quite similar to the testing MAE error (see values above), so we can conclude that it does in fact estimate testing error well.
-
+The OOB error is quite similar to the testing MAE error (see values
+above), so we can conclude that it does in fact estimate testing error
+well.
 
 c)  What is the predicted value for Michelle?
 
@@ -561,12 +562,12 @@ c)  What is the predicted value for Michelle?
 m_prediction <- predict(fit4, newdata = michelle)
 m_prediction
 ```
+
 The predicted value for Michelle is printed above, 9.823.
 
 v.  Now you have built so many predicted models (fit1 through fit4 in
     this section). What about build a fit5 which bags fit1 through fit4.
     Does fit5 have the smallest testing error?
-
 
 ```{r, echo=F, results=T}
 fit5 <- (predict(fit_t1, michelle) + 
@@ -575,11 +576,14 @@ fit5 <- (predict(fit_t1, michelle) +
                       predict(fit4, michelle))/4
 data.frame(fitted=fit5,  obsy=michelle$log_income)
 ```
-Above we see fit5's prediction for Michelle versus the actual value. fit5 does not have the smallest testing error, but it is still pretty good.
+
+Above we see fit5's prediction for Michelle versus the actual value.
+fit5 does not have the smallest testing error, but it is still pretty
+good.
 
 iv. Now use `XGBoost` to build the fit6 predictive equation. Evaluate
     its testing error. Also briefly explain how it works.
-    
+
 ```{r, echo=F, results=F}
 data.train_encoded <- one_hot(as.data.table(data.train))
 
@@ -597,18 +601,20 @@ predictions <- predict(fit6, newdata = as.matrix(data.test_encoded[, -31]))
 actual_values <- data.test_encoded$log_income
 testing_error <- mean(abs(predictions - actual_values))
 ```
+
 ```{r, echo=F, results=T}
 rss <- sum((predictions - actual_values)^2)
 print(paste("Residual Sum of Squares (RSS) for fit6:", rss))
 ```
-XGBoost uses boosting, which builds an ensemble of decision trees sequentially. Each model after that corrects the errors made by the previous models, leading to a stronger overall model.
 
+XGBoost uses boosting, which builds an ensemble of decision trees
+sequentially. Each model after that corrects the errors made by the
+previous models, leading to a stronger overall model.
 
 v.  Summarize the results and nail down one best possible final model
     you will recommend to predict income. Explain briefly why this is
     the best choice. Finally for the first time evaluate the prediction
     error using the validating data set.
-
 
 ```{r, echo=F, results=F}
 # function for fit5 (takes in data to predict on)
@@ -633,24 +639,21 @@ Note that the testing errors are RSS for all of the models.
 fit1 is a single decision tree based on the Educ + Gender variables.
 Testing error for fit1: 438.98
 
-fit2 is a single decision tree based on all of the variables.
-Testing error for fit2: 423.70
+fit2 is a single decision tree based on all of the variables. Testing
+error for fit2: 423.70
 
-fit3 is a bagging of two bootstrapped trees.
-Testing error for fit3: 456.14
+fit3 is a bagging of two bootstrapped trees. Testing error for fit3:
+456.14
 
-fit4 is a random forest of 100 trees with mtry=4. 
-Testing error for fit4: 404.71
+fit4 is a random forest of 100 trees with mtry=4. Testing error for
+fit4: 404.71
 
-fit5 is a bagging of fit 1 through 4.
-Testing error for fit5: 422.59
+fit5 is a bagging of fit 1 through 4. Testing error for fit5: 422.59
 
-fit6 is a XGBoost model.
-Testing error for fit6: 0.65
+fit6 is a XGBoost model. Testing error for fit6: 0.65
 
-
-fit6 beats all the other models in terms of testing loss, so that is the best choice.
-
+fit6 beats all the other models in terms of testing loss, so that is the
+best choice.
 
 ```{r, echo=F, results=T}
 
@@ -697,8 +700,8 @@ print(paste("RSS for fit4:", f4_rss))
 print(paste("RSS for fit5:", f5_rss))
 print(paste("RSS for fit6:", f6_rss))
 ```
-Based on the validation set, fit6 remains the best performing model.
 
+Based on the validation set, fit6 remains the best performing model.
 
 vi. Use your final model to predict Michelle's income.
 
@@ -707,9 +710,9 @@ michelle.onehot <- one_hot(as.data.table(michelle))
 m_pred <- predict(fit6, newdata = as.matrix(michelle.onehot[, -31]))
 m_pred
 ```
-The final mode, fit6, predicts Michelle's log income as 10.71299 which is extremely close to her actual income (10.71442).
 
-
+The final mode, fit6, predicts Michelle's log income as 10.71299 which
+is extremely close to her actual income (10.71442).
 
 # Problem 2: Yelp challenge 2019
 
@@ -726,7 +729,7 @@ commonly-used for websites. Each item/subject/sample is contained in a
 brace *{}*. Data is stored as **key-value** pairs inside the brace.
 *Key* is the counterpart of column name in *csv* and *value* is the
 content/data. Both *key* and *value* are quoted. Each pair is separated
-by a comma. 
+by a comma.
 
 **Data needed:** yelp_review_20k.json available in Canvas.
 
@@ -772,15 +775,23 @@ yelp_data$date <- as.POSIXct(yelp_data$date, format="%Y-%m-%d %H:%M:%S")
 summary(yelp_data)  
 ```
 
-a)  Which time period were the reviews collected in this data? 
+a)  Which time period were the reviews collected in this data?
 
-The oldest review was 2004-10-19 03:05:42.00, and the newest review was 2018-10-04 18:20:45.00. So between 2004 and 2018.
+The oldest review was 2004-10-19 03:05:42.00, and the newest review was
+2018-10-04 18:20:45.00. So between 2004 and 2018.
 
 b)  Are ratings (with 5 levels) related to month of the year or days of
     the week? Only address this through EDA please.
-    
-  Based on the below plots of the distribution of ratings by day and month, it seems that the ratings have the same distribution regardless of the day of the week or the month, so they are NOT related. Because the boxplot is calculated using medians (and quartiles), they output whole numbers. And since all of the months/days have the same distribution curve (if you looked at a histogram), they all have the same medians/quartiles, and thus they all have the same boxplots (though the means would show slight variations).
-    
+
+Based on the below plots of the distribution of ratings by day and
+month, it seems that the ratings have the same distribution regardless
+of the day of the week or the month, so they are NOT related. Because
+the boxplot is calculated using medians (and quartiles), they output
+whole numbers. And since all of the months/days have the same
+distribution curve (if you looked at a histogram), they all have the
+same medians/quartiles, and thus they all have the same boxplots (though
+the means would show slight variations).
+
 ```{r, echo=F, results=T}
 # extract month and day of the week
 yelp_data <- yelp_data %>%
@@ -799,13 +810,17 @@ ggplot(yelp_data, aes(x = factor(day_of_week), y = stars)) +
   labs(x = "Day of the Week", y = "Stars") +
   ggtitle("Distribution of Ratings by Day of the Week")
 ```
+
 ```{r, echo=F, results=T}
 ggplot(yelp_data, aes(x = stars)) +
   geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
   labs(x = "Stars", y = "Frequency") +
   ggtitle("Distribution of Ratings")
 ```
-We also made a histogram of the ratings across all of the yelp reviews, and when filtering by month or day, we saw the same distribution across all months and days, roughly.
+
+We also made a histogram of the ratings across all of the yelp reviews,
+and when filtering by month or day, we saw the same distribution across
+all months and days, roughly.
 
 <!-- -->
 
@@ -824,11 +839,16 @@ typeof(data1.text)
 # print(data1.text[1:5]) # view a few documents
 ```
 
+Then, we make the corpus, clean the text (punctuation, lowercase,
+stemming, etc.), and set a spare threshold for words appearing 0.5% of
+the time, and we inspect the document term matrix:
 
-Then, we make the corpus, clean the text (punctuation, lowercase, stemming, etc.), and set a spare threshold for words appearing 0.5% of the time, and we inspect the document term matrix:
 ```{r, echo=F, results=T}
+options(repos = list(CRAN = "https://cloud.r-project.org/"))
 install.packages("tm")
+install.packages("SnowballC")
 library(tm)
+library(SnowballC)
 
 mycorpus1 <- VCorpus(VectorSource(data1.text))
 # Control list for creating our DTM within DocumentTermMatrix
@@ -847,9 +867,15 @@ dtm.10 <- removeSparseTerms(dtm.10.long, 1-0.005)
 
 a)  Briefly explain what does this matrix record? What is the cell
     number at row 100 and column 405? What does it represent?
-    
-  A document term matrix records at position i, j, where rows are the documents and columns are the terms/words, the frequency of the word j in document i. In this case, at row 100 column 405, we see a value of 0, which means that in the 100th document/yelp review the 405th word appeared that many times. We printed the 405th word, which appears to be "except". After checking the actual review, we verified that "except" wasn't found in the text.
-  
+
+A document term matrix records at position i, j, where rows are the
+documents and columns are the terms/words, the frequency of the word j
+in document i. In this case, at row 100 column 405, we see a value of 0,
+which means that in the 100th document/yelp review the 405th word
+appeared that many times. We printed the 405th word, which appears to be
+"except". After checking the actual review, we verified that "except"
+wasn't found in the text.
+
 ```{r, echo=F, results= T}
 dtm.10_df <- as.data.frame(as.matrix(dtm.10))
 dim(dtm.10_df)
@@ -861,24 +887,25 @@ column_name
 
 yelp_data$text[100]
 ```
-  
 
 b)  What is the sparsity of the dtm obtained here? What does that mean?
 
 ```{r, echo=F, results=T}
 dtm.10
 ```
-As seen from the output above, the sparsity is 97%, which is the proportion of cells in the matrix that are empty/0. This is a pretty sparse matrix.
 
+As seen from the output above, the sparsity is 97%, which is the
+proportion of cells in the matrix that are empty/0. This is a pretty
+sparse matrix.
 
 <!-- -->
 
 iii. Set the stars as a two category response variable called rating to
      be “1” = 5,4 and “0”= 1,2,3. Combine the variable rating with the
      dtm as a data frame called data2.
-     
+
 We create the rating column as a factor as seen below:
-     
+
 ```{r, echo=F, results=T}
 yelp_data$rating <- c(0)
 yelp_data$rating[yelp_data$stars >= 4] <- 1
@@ -886,7 +913,9 @@ yelp_data$rating <- as.factor(yelp_data$rating)
 str(yelp_data) #str(data)
 ```
 
-We use cbind to combine the dtm.10 data frame with the newly created ratings column, and call it data2.
+We use cbind to combine the dtm.10 data frame with the newly created
+ratings column, and call it data2.
+
 ```{r, echo=F, results=T}
 # convert dtm.10 to a data frame
 dtm.10_df <- as.data.frame(as.matrix(dtm.10))
@@ -896,13 +925,15 @@ data2 <- cbind(yelp_data$rating, dtm.10_df)
 names(data2)[1] <- "rating"
 ```
 
-
 ## Analysis
 
 Get a training data with 13000 reviews and the 5000 reserved as the
 testing data. Keep the rest (2000) as our validation data set.
 
-Reserve 13000 randomly chosen rows as our test data (`data2.test`) and of the remaining 7000, reserve 5000 as the training data (`data2.train`) and the rest as validation.
+Reserve 13000 randomly chosen rows as our test data (`data2.test`) and
+of the remaining 7000, reserve 5000 as the training data (`data2.train`)
+and the rest as validation.
+
 ```{r, echo=F, results=T}
 set.seed(1)
 
@@ -920,17 +951,24 @@ dim(data.test)
 dim(data.val)
 ```
 
+```{r, echo=F}
+# renaming columns to avoid special terms in R (e.g. 'break' and 'next')
+colnames(data.train) <- paste0(colnames(data.train), "_c")
+colnames(data.test) <- paste0(colnames(data.test), "_c")
+colnames(data.val) <- paste0(colnames(data.val), "_c")
+```
+
 ## 2. LASSO
 
 i.  Use the training data to get Lasso fit. Choose lambda.1se. Keep the
     result here.
-    
+
 ```{r, echo=F, results=T}
 # LASSO model creation
 set.seed(1)
 # names(sales_temp)
-Y <- as.matrix(data.train[, 'rating']) # extract Y
-X <- model.matrix(rating ~ ., data = data.train)[, -1]
+Y <- as.matrix(data.train[, 'rating_c']) # extract Y
+X <- model.matrix(rating_c ~ ., data = data.train)[, -1]
 
 fit_lasso_cv <- cv.glmnet(X, Y, nfolds = 5, alpha = 1, family="binomial")
 plot(fit_lasso_cv)
@@ -942,17 +980,17 @@ coef.1se <- coef.1se[which(coef.1se !=0),][-1]
 var.1se <- rownames(as.matrix(coef.1se))
 length(var.1se)
 ```
- Using lambda 1se got us 426 variables in the LASSO model.
+
+Using lambda 1se got us 426 variables in the LASSO model.
 
 ii. Feed the output from Lasso above, get a logistic regression.
 
 We get a logistic regression with the code below:
 
 ```{r, echo=T, results=F}
-glm.input <- as.formula(paste("rating", "~", paste(var.1se, collapse = "+")))
+glm.input <- as.formula(paste("rating_c", "~", paste(var.1se, collapse = "+")))
 fit.1se.glm <- glm(glm.input, family = binomial(logit), data=data.train)  # debiased or relaxed LASSO
 ```
-
 
 <!-- -->
 
@@ -960,7 +998,7 @@ a)  Pull out all the positive coefficients and the corresponding words.
     Rank the coefficients in a decreasing order. Report the leading 2
     words and the coefficients. Describe briefly the interpretation for
     those two coefficients.
-    
+
 ```{r, echo=F, results=T}
 # get positive coefficients and corresponding words
 positive_coefficients <- coef(fit.1se.glm)[coef(fit.1se.glm) > 0]
@@ -979,19 +1017,28 @@ leading_coefficients <- head(ranked_coefficients$coefficient, 2)
 # ranked_coefficients
 ```
 
-The leading two words with the highest positive coefficients are gem and bomb, with 2.36898934 and 2.36822048 respectively.The positive coefficients for the words "gem" and "bomb" suggest that reviews mentioning these terms are associated with significantly higher chances of receiving a positive rating. Specifically, each occurrence of the word "gem" and "bomb" in a review is associated with approximately 2.37 times higher chances of receiving a positive rating.
+The leading two words with the highest positive coefficients are gem and
+bomb, with 2.36898934 and 2.36822048 respectively.The positive
+coefficients for the words "gem" and "bomb" suggest that reviews
+mentioning these terms are associated with significantly higher chances
+of receiving a positive rating. Specifically, each occurrence of the
+word "gem" and "bomb" in a review is associated with approximately 2.37
+times higher chances of receiving a positive rating.
 
 b)  Make a word cloud with the top 100 positive words according to their
     coefficients. Interpret the cloud briefly.
-    
-  The word cloud prints the top positive coefficient words, with bigger words for bigger positive coefficients. This is a way to visualize the relative coefficients among the positive coefficient words.
-    
+
+The word cloud prints the top positive coefficient words, with bigger
+words for bigger positive coefficients. This is a way to visualize the
+relative coefficients among the positive coefficient words.
+
 ```{r, echo=F, results=T, warning=F, message=F}
+ranked_coefficients$word <- gsub("_c$", "", ranked_coefficients$word)
+
 cor.special <- brewer.pal(8,"Dark2")  # set up a pretty color scheme
 wordcloud(ranked_coefficients$word[1:100], ranked_coefficients$coefficient[1:100],  # make a word cloud
           colors=cor.special, ordered.colors=F)
 ```
-
 
 c)  Repeat i) and ii) for the bag of negative words.
 
@@ -1013,12 +1060,23 @@ leading_coefficients <- head(ranked_coefficients$coefficient, 2)
 # ranked_coefficients
 ```
 
-The leading two words with the most negative coefficients are unprofession and horribl, with -4.51791831 and -3.06445611 respectively. The negative coefficients for the words "unprofession" and "horribl" suggest that reviews mentioning these terms are associated with significantly lower chances of receiving a positive rating. Specifically, each occurrence of the word "unprofession" and "horribl" in a review is associated with approximately 4.52 or 3.06 times lower chances of receiving a positive rating respectively.
+The leading two words with the most negative coefficients are
+unprofession and horribl, with -4.51791831 and -3.06445611 respectively.
+The negative coefficients for the words "unprofession" and "horribl"
+suggest that reviews mentioning these terms are associated with
+significantly lower chances of receiving a positive rating.
+Specifically, each occurrence of the word "unprofession" and "horribl"
+in a review is associated with approximately 4.52 or 3.06 times lower
+chances of receiving a positive rating respectively.
 
-  The word cloud prints the more negative coefficient words, with bigger words for more negative coefficients. This is a way to visualize the relative coefficients among the negative coefficient words.
-    
+The word cloud prints the more negative coefficient words, with bigger
+words for more negative coefficients. This is a way to visualize the
+relative coefficients among the negative coefficient words.
+
 ```{r, echo=F, results=T, warning=F, message=F}
 library(scales)
+ranked_coefficients$word <- gsub("c$", "", ranked_coefficients$word)
+
 
 # Specify font sizes based on coefficient values
 # Scale coefficient values to font sizes between 4 and 12
@@ -1034,16 +1092,22 @@ wordcloud(words = ranked_coefficients$word[1:100],
           fixed.asp = TRUE)
 ```
 
-d)  Summarize the findings. We found that 189 words and 238 words have positive and negative coefficients respectively. Through ranking the coefficients, we found that gem and bomb have the greatest positive impact on rating, whereas unprofession and horribl have the greatest negative impact. The wordclouds above show some of the most positive and negative coefficient words.
+d)  Summarize the findings. We found that 189 words and 238 words have
+    positive and negative coefficients respectively. Through ranking the
+    coefficients, we found that gem and bomb have the greatest positive
+    impact on rating, whereas unprofession and horribl have the greatest
+    negative impact. The wordclouds above show some of the most positive
+    and negative coefficient words.
 
 <!-- -->
 
-iii. Using majority votes find the testing errors 
+iii. Using majority votes find the testing errors
 
-  i) From Lasso fit in 3)  
+i)  From Lasso fit in 3)
 
-The mean absolute error here is 0.1757 when using the predictions of the lasso model.
-  
+The mean absolute error here is 0.1757 when using the predictions of the
+lasso model.
+
 ```{r, echo=F, results=T}
 predict.glm <- predict(fit.1se.glm, data.test, type = "response")
 actual_ratings <- as.numeric(data.test$rating) - 1
@@ -1056,9 +1120,12 @@ testerror.lasso <- mean(differences)
 testerror.lasso
 ```
 
-  ii) From logistic regression in 4) 
-  
-Use the testing data we get mis-classification errors for one rule: majority vote. We found test error (mean of misclassification errors) was 0.1332, and AUC was 0.9235, which means our model is pretty good.
+ii) From logistic regression in 4)
+
+Use the testing data we get mis-classification errors for one rule:
+majority vote. We found test error (mean of misclassification errors)
+was 0.1332, and AUC was 0.9235, which means our model is pretty good.
+
 ```{r, echo=F, results=T}
 predict.glm <- predict(fit.1se.glm, data.test, type = "response")
 class.glm <- ifelse(predict.glm > .5, "1", "0")
@@ -1067,29 +1134,208 @@ testerror.glm <- mean(data.test$rating != class.glm)
 testerror.glm   # mis classification error
 pROC::roc(data.test$rating, predict.glm, plot=T) # AUC=0.9235!!!!
 ```
- 
-  iii) Which one is smaller?
-  
-  The error is smaller for the logistic regression model, since 0.1332 is less than 0.1757.
+
+iii) Which one is smaller?
+
+The error is smaller for the logistic regression model, since 0.1332 is
+less than 0.1757.
 
 ## 3. Random Forest
 
 i.  Briefly summarize the method of Random Forest
 
+    It is an ensemble learning method that uses multiple decision trees
+    during training and outputs the mode/mean classification/regression
+    of the individual trees. It introduces randomness by using different
+    subsets of data for training each tree and by selecting a random
+    subset of features for each split in the trees. This approach helps
+    in reducing overfitting and improving prediction accuracy compared
+    to a single decision tree.
+
 ii. Now train the data using the training data set by RF. Get the
     testing error of majority vote. Also explain how you tune the tuning
     parameters (`mtry` and `ntree`).
+
+To find the optimal number of trees for our random forest, we increment the number of trees by 50 and record the OOB error. We then choose the number of trees at the local minima of the OOB vs. n_trees plot.
+```{r, echo=F, results=T}
+RUN_CELLS = FALSE
+```
+
+
+```{r, echo=F, results=T}
+# paralellizing the random forest training across all CPU cores
+
+if (RUN_CELLS) {
+  install.packages("doParallel")
+  install.packages("foreach")
+  install.packages("randomForest")
+  install.packages("ranger")
+  library(ranger)
+  library(doParallel)
+  library(foreach)
+  library(randomForest)
+  
+  
+  numCores <- detectCores()
+  registerDoParallel(cores=numCores)
+  
+  
+  num.trees.range <- seq(50, 300, by=50)
+  oob.errors <- numeric(length(num.trees.range))
+  
+  for (i in seq_along(num.trees.range)) {
+    print(i)
+    fit.rf <- ranger(rating_c ~ ., data = data.train, mtry = 100, 
+                     num.trees = num.trees.range[i], num.threads = numCores, 
+                     importance = 'impurity', keep.inbag = TRUE)
+    
+    oob.errors[i] <- fit.rf$prediction.error
+  }
+  
+  plot(num.trees.range, oob.errors, type = "b", col = "red", pch = 16, 
+       xlab = "Number of Trees", ylab = "OOB Error", main = "OOB Error vs. Number of Trees")
+  
+}
+
+```
+![](./oob vs trees.png)
+
+From the plot above (we commented out the training to reduce runtime), we can see that the optimal number of trees is 200.
+
+
+Now we will do the same process to find the optimal mtry value, except setting num.trees to the optimal found above.
+```{r, echo=F, result=T}
+if (RUN_CELLS) {
+  num.mtry.range <- seq(10, 610, by=50)
+  oob.errors <- numeric(length(num.mtry.range))
+  
+  for (i in seq_along(num.mtry.range)) {
+    print(num.mtry.range[i])
+    fit.rf <- ranger(rating_c ~ ., data = data.train, mtry = num.mtry.range[i], 
+                     num.trees = 200, num.threads = numCores, 
+                     importance = 'impurity', keep.inbag = TRUE)
+    
+    oob.errors[i] <- fit.rf$prediction.error
+  }
+  
+  plot(num.mtry.range, oob.errors, type = "b", col = "red", pch = 16, 
+       xlab = "Mtry", ylab = "OOB Error", main = "OOB Error vs. Mtry Value")
+  
+}
+```
+```{r, echo=F, results=T}
+if (RUN_CELLS) {
+  num.mtry.range2 <- seq(10, 100, by=5)
+  oob.errors.2 <- numeric(length(num.mtry.range2))
+  
+  for (i in seq_along(num.mtry.range2)) {
+    print(num.mtry.range2[i])
+    fit.rf2 <- ranger(rating_c ~ ., data = data.train, mtry = num.mtry.range2[i],
+                      num.trees = 200, num.threads = numCores,
+                      importance = 'impurity', keep.inbag = TRUE)
+    
+    oob.errors.2[i] <- fit.rf2$prediction.error
+  }
+  
+  plot(num.mtry.range2, oob.errors.2, type = "b", col = "red", pch = 16,
+       xlab = "Mtry", ylab = "OOB Error", main = "OOB Error vs. Mtry Value")
+}
+```
+![](./mtry vs oob.png)
+![](./mtry vs oob 2.png)
+
+From the plot above the optimal mtry value is 25.
+
+```{r, echo=F, results=T}
+install.packages("doParallel")
+install.packages("foreach")
+install.packages("randomForest")
+install.packages("ranger")
+library(ranger)
+library(doParallel)
+library(foreach)
+library(randomForest)
+
+
+numCores <- detectCores()
+registerDoParallel(cores = numCores)
+
+fit.rf <- ranger(rating_c ~ ., data = data.train, mtry = 25,
+                 num.trees = 200, num.threads = numCores,
+                 importance = 'impurity', keep.inbag = TRUE)
+
+# computing OOB error
+predictions <- as.numeric(predictions(fit.rf)) - 1
+actual_values <- as.numeric(data.test$rating_c) - 1 
+
+# computing testing error
+mae <- mean(abs(predictions - actual_values))
+
+print(paste("Mean Absolute Error (MAE):", mae))
+
+rss <- sum((predictions - actual_values)^2)
+print(paste("Residual Sum of Squares (RSS):", rss))
+```
 
 ## 4. Boosting
 
 Now use `XGBoost` to build the fourth predictive equation. Evaluate its
 testing error.
 
+```{r, echo=F, results=F}
+# training the xgb model
+features_matrix <- as.matrix(select(data.train, -rating_c))
+labels_vector <- pull(data.train, rating_c)
+
+dtrain <- xgb.DMatrix(data = features_matrix, label = labels_vector)
+
+params <- list(
+    objective = "reg:squarederror",
+    eta = 0.3,
+    max_depth = 6
+)
+
+fit.xgb <- xgboost(params = params, data = dtrain, nrounds = 100)
+```
+
+```{r, echo=F, results=T}
+# calculating the MAE on the test set
+test_features <- select(data.test, -rating_c)
+test_labels <- as.numeric(data.test$rating_c)
+test_matrix <- as.matrix(test_features)
+dtest <- xgb.DMatrix(data = test_matrix, label = test_labels)
+
+predictions <- predict(fit.xgb, newdata = dtest)
+
+testing_error <- mean(abs(predictions - test_labels))
+print(paste("Mean Absolute Error (MAE):", testing_error))
+```
+
 ## 5. Ensemble model
 
 i.  Take average of some of the models built above (also try all of
     them) and this gives us the fifth model. Report it's testing error.
     (Do you have more models to be bagged, try it.)
+    
+```{r, echo=F, results=T}
+Ensemble <- function() {
+  predict.glm <- predict(fit.1se.glm, data.test, type = "response")
+  class.glm <- ifelse(predict.glm > .5, 1, 0)
+  rf_preds <- as.numeric(predictions(fit.rf)) - 1
+  xgb_preds <- as.numeric(predict(fit.xgb, newdata = dtest)) - 1
+  
+  return ((predict.glm + class.glm + rf_preds + xgb_preds) / 4)
+}
+
+
+# calc the MAE of Ensemble on the test set
+Ensemble.preds <- Ensemble()
+actual_values <- as.numeric(data.test$rating_c) - 1
+mae <- mean(abs(Ensemble.preds - actual_values))
+print(paste("Mean Absolute Error (MAE) for Ensemble:", mae))
+```
+After bagging the GLM, LASSO classifier, random forest, and XGBoost model, we found a MAE value of 0.244.
+
 
 ## 6. Final model
 
@@ -1098,3 +1344,16 @@ surprised? Report the final model and accompany the validation error.
 Once again this is THE only time you use the validation data set. For
 the purpose of prediction, comment on how would you predict a rating if
 you are given a review (not a tm output) using our final model?
+
+Based on the errors found for each model, the LASSO classification model performs the best. Its MAE is 0.1332. We thought that the boosting model would do the best. Based on the validation data, we see a MAE of 0.1305653 and an AUC of 0.9253. We would look at only the words that are used by the glm, count up the frequency for those words in the review, then use those are parameters along with the beta values from our glm prediction equation, and take the output of the prediction equation and round it up/down based on a threshold of 0.5.
+
+```{r, echo=F, results=T}
+predict.glm <- predict(fit.1se.glm, data.val, type = "response")
+class.glm <- ifelse(predict.glm > .5, "1", "0")
+
+testerror.glm <- mean(data.val$rating != class.glm)
+testerror.glm   # mis classification error
+pROC::roc(data.val$rating, predict.glm, plot=T) # AUC=0.9235!!!!
+```
+
+
