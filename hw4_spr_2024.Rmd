@@ -505,7 +505,7 @@ for (p in 1:31)  # repeat the following code inside { } 19 times
   #plot(fit.rf, col= p, lwd = 3)
   rf.error.p[p] <- fit.rf$mse[n_trees]  # collecting oob mse based on n_trees trees
 }
-rf.error.p   # oob mse returned: should be a vector of 19
+# rf.error.p   # oob mse returned: should be a vector of 19
 
 plot(1:31, rf.error.p, pch=16,
      main = "Testing errors of mtry with 100 trees",
